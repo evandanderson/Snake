@@ -4,11 +4,140 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="./styles.css">
     <title>Snake</title>
+    <style>
+        .main {
+            height: 300px;
+            width: 300px;
+            background-color: black;
+        }
+
+        .segment {
+            height: 6px;
+            width: 6px;
+            background-color: white;
+            position: absolute;
+            left: 50%;
+            top: 50%;
+        }
+
+        #dot {
+            height: 6px;
+            width: 6px;
+            background-color: red;
+            position: absolute;
+        }
+    </style>
 </head>
 <body>
-    <script src="./main.js"></script>
+    <script>
+        const controlKeys = ["ArrowUp", "ArrowLeft", "ArrowDown", "ArrowRight"]
+        const windowSize = 300
+        const increment = 6
+        const coords = Array.from({length: windowSize / increment - 1}, (_, i) => i * increment + increment)
+        let snake = Array.from({length: 5}, (_, i) => [windowSize / 2 - i * increment, windowSize / 2]).reverse()
+        let direction = "Right"
+        let dot = null
+        let main = null
+        let isActive = false
+
+        function createSegment(left, top) {
+            const newSegment = document.createElement("div")
+            newSegment.className = "segment"
+            newSegment.style.left = `${left}px`
+            newSegment.style.top = `${top}px`
+            main.appendChild(newSegment)
+        }
+
+        function createSnake() {
+            snake.map((segment) => {
+                createSegment(segment)
+            })
+        }
+
+        function createDot() {
+            let left = coords[Math.round(Math.random() * (windowSize / increment - 1))]
+            let top = coords[Math.round(Math.random() * (windowSize / increment - 1))]
+            const newDot = document.createElement("div")
+            newDot.id = "dot"
+            newDot.style.left = `${left}px`
+            newDot.style.top = `${top}px`
+            main.appendChild(newDot)
+            dot = [left, top]
+        }
+
+        function keyHandler(event) {
+            if (controlKeys.indexOf(event.key) >= 0 && isActive) {
+                direction = event.key.slice(5)
+            }
+            else if (event.key == " ") {
+                isActive ? restartGame() : startGame(); isActive = true;
+            }
+        }
+
+        function restartGame() {
+            main.innerHTML = ""
+            snake = Array.from({length: 5}, (_, i) => [windowSize / 2 - i * increment, windowSize / 2]).reverse()
+            direction = "Right"
+            createSnake()
+            createDot()
+        }
+
+        function startGame() {
+            createSnake()
+            createDot()
+            setInterval(moveSnake, 50)
+        }
+
+        function checkCollision(head) {
+            if ((snake.indexOf(head) >= 0 && snake.indexOf(head) < snake.length - 1) || !( 0 < head[0] && head[0] < windowSize ) || !( 0 < head[1] && head[1] < windowSize )) {
+                return true
+            }
+            else {
+                return false
+            }
+        }
+
+        function moveSnake() {
+            const head = snake.at(-1)
+            let [left, top] = head
+            if (direction == "Up") {
+                top -= increment
+            }
+            else if (direction == "Left") {
+                left -= increment
+            }
+            else if (direction == "Down") {
+                top += increment
+            }
+            else if (direction == "Right") {
+                left += increment
+            }
+
+            if (!checkCollision(head)) {
+                snake.push([left,top])
+                createSegment(left, top)
+                if (left == dot[0] && top == dot[1]) {
+                    let dot = document.getElementById("dot")
+                    main.removeChild(dot)
+                    createDot()
+                }
+                else {
+                    let tail = document.getElementsByClassName("segment")[0]
+                    main.removeChild(tail)
+                    snake.shift()
+                }
+            }
+            else {
+                restartGame()
+            }
+        }
+
+        document.body.onload = () => {
+            main = document.getElementById("main")
+            document.addEventListener('keydown', keyHandler)
+        }
+    </script>
     <div id="main" class="main">
     </div>
 </body>
